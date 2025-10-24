@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "writer-studio"
-version = "0.1.1"
+version = "0.1.2"
 description = "Writer Studio is a platform for writing and editing documents."
 readme = "README.md"
 requires-python = ">=3.13"
@@ -32,6 +32,7 @@ dependencies = [
 dev = [
   "pytest==8.3.2",
   "pytest-cov==5.0.0",
+  "pytest-asyncio==0.23.8",
   "black==24.8.0",
   "isort==5.13.2",
   "flake8==7.1.1",
@@ -73,6 +74,11 @@ addopts = [
   "--cov-report=html:reports/htmlcov",
 ]
 testpaths = ["tests"]
+markers = ["asyncio"]
+asyncio_mode = "auto"
+filterwarnings = [
+  "ignore::DeprecationWarning:pytest_asyncio.plugin",
+]
 
 [tool.coverage.run]
 branch = true

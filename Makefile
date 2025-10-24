@@ -13,9 +13,11 @@ setup:
 build:
 	$(UV) build
 
-# Run unit tests (quiet). Uses project venv via uv.
-test:
-	$(UV) run pytest -q
+# Run unit tests with coverage (console + HTML)
+# Override testpaths to avoid errors when tests/ is missing
+# HTML report output: reports/htmlcov
+ test:
+	$(UV) run pytest --override-ini testpaths= --cov=$(PY_SRC) --cov-report=term-missing --cov-report=html:reports/htmlcov --cov-fail-under=95
 
 # Lint: black check, isort check, flake8 (with explicit line length and ignores)
 lint:

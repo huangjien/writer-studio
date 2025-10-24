@@ -25,6 +25,7 @@ novel-eval path/to/chapter.txt --model gpt-4o --rounds 4 --lang zh-CN
 
 Flags:
 - `--model`: OpenAI model (default: `gpt-4o-mini`).
+- `--provider`: LLM provider (openai, deepseek, gemini, ollama). Defaults from `NOVEL_EVAL_PROVIDER`.
 - `--rounds`: Max round-robin turns (default: 4). With four agents, each speaks once.
 - `--json`: Print only the final JSON summary if available.
 - `--lang`: Answer language (default: `zh-CN`). All agents respond in this language.
@@ -100,3 +101,80 @@ print(result.messages[-1].content)  # JSON summary from Summarizer
   - Team run lifecycle and message counts
   - JSON parsing warnings (if final message isn’t valid JSON)
   - Debug token usage summary
+
+### LLM Providers and Models
+
+Supported providers: `openai`, `deepseek`, `gemini`, `ollama`. You can set a global default via environment or override per run via CLI. Agents can also specify their own provider/model in YAML.
+
+**Environment (.env)**
+
+```
+# Core provider and model
+NOVEL_EVAL_PROVIDER=ollama                # openai | deepseek | gemini | ollama
+NOVEL_EVAL_MODEL=qwen3:8b                 # e.g. gpt-4o-mini, deepseek-r1, gemini-1.5-flash, or Ollama tag
+NOVEL_EVAL_LANG=zh-CN
+NOVEL_EVAL_LOG_LEVEL=INFO
+
+# OpenAI
+OPENAI_API_KEY=
+
+# DeepSeek (OpenAI-compatible)
+DEEPSEEK_API_KEY=
+DEEPSEEK_BASE_URL=https://api.deepseek.com/v1
+
+# Gemini (OpenAI-compatible endpoint)
+GEMINI_API_KEY=
+GEMINI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
+
+# Ollama (local)
+OLLAMA_HOST=http://localhost:11434
+```
+
+- For `ollama`, pull the model locally first: `ollama pull qwen3:8b` and ensure the daemon is running.
+- For `deepseek` and `gemini`, set the respective API keys; their endpoints are OpenAI-compatible.
+
+**CLI Examples**
+
+```
+# Use env defaults (source .env first)
+novel-eval samples/chapter1.txt
+
+# Explicit provider + model override
+novel-eval samples/chapter1.txt --provider ollama --model qwen3:8b --lang zh-CN
+novel-eval samples/chapter1.txt --provider deepseek --model deepseek-r1
+novel-eval samples/chapter1.txt --provider gemini --model gemini-1.5-flash
+```
+
+**Per-Agent YAML Overrides**
+
+Add `provider` and `model` under specific agents to mix providers in one team:
+
+```yaml
+language: es
+agents:
+  LiteraryCritic:
+    provider: ollama
+    model: qwen3:8b
+    system_message: |
+      Crítico literario... Responder en es.
+  CopyEditor:
+    provider: openai
+    model: gpt-4o-mini
+    system_message: |
+      Corrector de estilo... Responder en es.
+  ContinuityChecker:
+    provider: deepseek
+    model: deepseek-r1
+    system_message: |
+      Comprobador de continuidad... Responder en es.
+  Summarizer:
+    provider: gemini
+    model: gemini-1.5-flash
+    system_message: |
+      Salida solo JSON conforme al esquema... Responder en es.
+```
+
+**Notes**
+- `OLLAMA_HOST` should be a base URL (no `/v1` suffix), e.g. `http://localhost:11434`.
+- Gemini’s OpenAI-compatible endpoint supports a subset of features; structured output and tool calling may be limited.
+- If an agent omits `provider`/`model` in YAML, it falls back to `NOVEL_EVAL_PROVIDER`/`NOVEL_EVAL_MODEL` or CLI arguments.

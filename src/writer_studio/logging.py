@@ -2,7 +2,7 @@ import logging
 import os
 from typing import Optional
 
-DEFAULT_LEVEL = os.getenv("NOVEL_EVAL_LOG_LEVEL", "INFO").upper()
+DEFAULT_LEVEL = "INFO"
 
 _LEVELS = {
     "CRITICAL": logging.CRITICAL,
@@ -15,7 +15,7 @@ _LEVELS = {
 
 def parse_level(level: Optional[str]) -> int:
     if level is None:
-        level = DEFAULT_LEVEL
+        level = os.getenv("NOVEL_EVAL_LOG_LEVEL", DEFAULT_LEVEL)
     lvl = str(level).upper()
     return _LEVELS.get(lvl, logging.INFO)
 
@@ -42,5 +42,5 @@ def init_logging(level: Optional[str] = None) -> None:
 def get_logger(name: str) -> logging.Logger:
     """Return a module-specific logger, ensuring initialization has occurred."""
     if not logging.getLogger().handlers:
-        init_logging(DEFAULT_LEVEL)
+        init_logging(os.getenv("NOVEL_EVAL_LOG_LEVEL", DEFAULT_LEVEL))
     return logging.getLogger(name)

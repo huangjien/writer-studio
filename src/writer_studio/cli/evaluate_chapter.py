@@ -35,7 +35,13 @@ def main() -> None:
     parser.add_argument(
         "--model",
         default=os.getenv("NOVEL_EVAL_MODEL", "gpt-4o-mini"),
-        help="OpenAI model name, e.g. gpt-4o or gpt-4o-mini",
+        help="Model name, e.g. gpt-4o-mini, deepseek-r1, gemini-1.5-flash, or an Ollama model.",
+    )
+    parser.add_argument(
+        "--provider",
+        default=os.getenv("NOVEL_EVAL_PROVIDER", "openai"),
+        choices=["openai", "deepseek", "gemini", "ollama"],
+        help="LLM provider to use (default from NOVEL_EVAL_PROVIDER).",
     )
     parser.add_argument(
         "--rounds", type=int, default=4, help="Max round-robin turns (agents speak once per round)."
@@ -65,7 +71,8 @@ def main() -> None:
         raise SystemExit(f"File not found: {chapter_path}")
 
     log.info(
-        "Starting evaluation: model=%s rounds=%d lang=%s file=%s",
+        "Starting evaluation: provider=%s model=%s rounds=%d lang=%s file=%s",
+        args.provider,
         args.model,
         args.rounds,
         args.lang,
@@ -76,7 +83,11 @@ def main() -> None:
     log.debug("Loaded chapter text: %d chars", len(text))
 
     result = evaluate_chapter(
-        text, model=args.model, max_rounds=args.rounds, answer_language=args.lang
+        text,
+        model=args.model,
+        max_rounds=args.rounds,
+        answer_language=args.lang,
+        provider=args.provider,
     )
     log.info(
         "Team run completed; messages=%d",
@@ -122,6 +133,7 @@ def main() -> None:
     # Respect --json: keep stdout clean; write metrics to stderr
     lines = [
         "=== Token Usage (estimated) ===",
+        f"provider: {args.provider}",
         f"model: {args.model}",
         f"input_tokens: {input_tokens}",
         f"output_tokens: {output_tokens}",
