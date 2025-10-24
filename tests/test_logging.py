@@ -1,5 +1,4 @@
 import logging
-import os
 
 from writer_studio.logging import get_logger, init_logging, parse_level
 

@@ -1,14 +1,7 @@
-import os
-
-import pytest
-
 from autogen_agentchat.teams import RoundRobinGroupChat
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
-from writer_studio.teams.novel_eval_team import (
-    _build_model_client,
-    create_novel_eval_team,
-)
+from writer_studio.teams.novel_eval_team import _build_model_client, create_novel_eval_team
 
 
 def test_build_model_client_openai(monkeypatch):

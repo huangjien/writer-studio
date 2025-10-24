@@ -87,6 +87,91 @@ print(result.messages[-1].content)  # JSON summary from Summarizer
     Summarizer:
       system_message: |
         Output only valid JSON per schema... Respond in en.
+
+## REST API
+
+A lightweight FastAPI service exposes the chapter evaluator via REST.
+
+- Start locally:
+  - `make serve-api` then open `http://localhost:8000/docs`
+- Endpoint:
+  - `POST /evaluate`
+  - Request body:
+    ```json
+    {
+      "chapter_text": "...",
+      "model": "qwen:8b",
+      "provider": "ollama",
+      "answer_language": "zh-CN",
+      "max_rounds": 4,
+      "return_messages": true
+    }
+    ```
+  - Response body:
+    ```json
+    {
+      "final_text": "...",            // last agent message
+      "final_json": { /* parsed */ },   // summarizer JSON if valid
+      "messages": [                     // included when return_messages=true
+        {"name": "LiteraryCritic", "content": "..."}
+      ]
+    }
+    ```
+
+### Docker + Nginx
+
+- Build and run with reverse proxy:
+  - `docker compose up --build`
+- Services:
+  - `api`: FastAPI at `http://localhost:8000`
+  - `nginx`: Front at `http://localhost:8080` (proxies to API)
+  - `ollama`: Optional local LLM runtime (`http://localhost:11434`)
+- Environment overrides:
+  - `NOVEL_EVAL_PROVIDER`, `NOVEL_EVAL_MODEL`, `NOVEL_EVAL_LANG`, `NOVEL_EVAL_LOG_LEVEL`, `OLLAMA_HOST`, `NOVEL_EVAL_DB_PATH`
+- Data persistence:
+  - Compose mounts `./data` to `/data` in the API container; SQLite DB at `/data/evals.db`.
+- Nginx config: `nginx.conf`
+
+This API uses the existing team orchestration in `writer_studio.teams.novel_eval_team` and returns the Summarizer's JSON when available. To ensure the Summarizer is the final speaker, set `max_rounds` divisible by 4.
+
+## Production (GCP) Deployment
+
+For GCP deployment with 443-only external access:
+
+- Use the production compose file: `docker-compose.prod.yml`.
+  - Only Nginx exposes `443:443`.
+  - The API service does NOT publish any host ports; it is reachable only via Nginx.
+  - Ollama service does NOT publish `11434` in production.
+- SSL termination in Nginx:
+  - Provide certificates under `./certs` on the host:
+    - `./certs/fullchain.pem` and `./certs/privkey.pem`
+  - The file `nginx-ssl.conf` configures HTTPS and proxies to `api:8000`.
+- Start services:
+  - `docker compose -f docker-compose.prod.yml up -d --build`
+- GCP firewall (Compute Engine):
+  - Allow inbound TCP `443` to the VM.
+  - Deny/block inbound `80`, `8000`, `11434`, and any other ports.
+  - Optionally, restrict source ranges to your allowed CIDRs.
+- Alternative: GCP HTTPS Load Balancer
+  - If terminating TLS at the load balancer, you can keep Nginx on port 80 behind the LB.
+  - In that case, expose only 80 internally and allow only LB health-check CIDRs; external traffic still enters via port 443 at the LB.
+
+## Persistence & Search
+
+The API persists evaluations to SQLite and (when available) indexes vectors with the `sqlite-vec` plugin.
+
+- DB path: `NOVEL_EVAL_DB_PATH` (default `/data/evals.db`)
+- Table: `evaluations`
+  - `id`, `created_at`, `provider`, `model`, `lang`, `rounds`, `input_tokens`, `output_tokens`, `total_tokens`, `chapter_text`, `final_text`, `final_json`
+- Virtual table: `eval_embeddings` (vec0) with dimension `NOVEL_EVAL_EMBED_DIM` (default 384)
+- Endpoints:
+  - `GET /evaluations/{id}` → fetch a stored evaluation
+  - `GET /search?q=...&top_k=5` → vector similarity search (falls back to LIKE if vec0 not loaded)
+- Persisting during evaluation:
+  - `POST /evaluate` accepts `persist` (default `true`). When enabled, it saves the run and adds a vector row.
+
+Note: Embeddings are deterministic, local pseudo-vectors (no network calls). If `sqlite-vec` fails to load, the API continues with basic LIKE search fallback.
+
   ```
 
 **Logging**

@@ -30,4 +30,8 @@ format:
 	$(UV) run isort $(LINT_PATHS)
 	$(UV) run black $(LINT_PATHS)
 
-.PHONY: setup build test lint format
+# Run API locally with reload
+serve-api:
+	$(UV) run uvicorn writer_studio.api.server:app --host 0.0.0.0 --port 8000 --reload
+
+.PHONY: setup build test lint format serve-api

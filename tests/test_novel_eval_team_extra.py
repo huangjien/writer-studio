@@ -1,5 +1,4 @@
 import builtins
-import os
 
 import pytest
 
@@ -60,7 +59,7 @@ async def test_a_evaluate_chapter_runs_with_stub(monkeypatch, tmp_path):
         "  preamble: |\n"
         "    Preamble text.\n"
         "  schema: |\n"
-        "    {\"type\": \"object\"}\n"
+        '    {"type": "object"}\n'
     )
     (tasks_dir / "test2.yaml").write_text(yaml_text, encoding="utf-8")
     monkeypatch.setenv("NOVEL_EVAL_TASKS_DIR", str(tasks_dir))
