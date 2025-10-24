@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PYPROJ="pyproject.toml"
+
+if [ ! -f "$PYPROJ" ]; then
+  echo "pre-commit: $PYPROJ not found; skipping version bump" >&2
+  exit 0
+fi
+
+# Use system python to avoid relying on venv tools
+python3 scripts/bump_version.py "$PYPROJ"
+
+# Stage the changed pyproject.toml so the commit includes the bumped version
+if git diff --quiet -- "$PYPROJ"; then
+  # No changes detected
+  exit 0
+else
+  git add "$PYPROJ"
+fi
