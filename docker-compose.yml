@@ -10,15 +10,14 @@ services:
       NOVEL_EVAL_LANG: ${NOVEL_EVAL_LANG:-zh-CN}
       NOVEL_EVAL_LOG_LEVEL: ${NOVEL_EVAL_LOG_LEVEL:-INFO}
       NOVEL_EVAL_DB_PATH: /data/evals.db
-      OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434}
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://localhost:11434}
     ports:
       - "8000:8000"
     volumes:
       - ./data:/data
     networks:
       - appnet
-    depends_on:
-      - ollama
+    # Ollama is external; no depends_on here
 
   nginx:
     image: nginx:alpine
@@ -29,14 +28,6 @@ services:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - api
-    networks:
-      - appnet
-
-  ollama:
-    image: ollama/ollama:latest
-    container_name: ollama
-    ports:
-      - "11434:11434"
     networks:
       - appnet
 

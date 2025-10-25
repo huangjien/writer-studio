@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "writer-studio"
-version = "0.1.3"
+version = "0.1.4"
 description = "Writer Studio is a platform for writing and editing documents."
 readme = "README.md"
 requires-python = ">=3.13"
@@ -47,17 +47,17 @@ autogen-stable = [
 novel-eval = "writer_studio.cli.evaluate_chapter:main"
 
 [tool.black]
-line-length = 100
+line-length = 88
 target-version = ["py313"]
 
 [tool.isort]
 profile = "black"
-line_length = 100
+line_length = 88
 multi_line_output = 3
 include_trailing_comma = true
 
 [tool.flake8]
-max-line-length = 100
+max-line-length = 88
 extend-ignore = ["E203", "W503"]
 exclude = [
   ".git",

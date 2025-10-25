@@ -1,4 +1,5 @@
 language: fr
+max_rounds: 4
 
 task:
   preamble: |

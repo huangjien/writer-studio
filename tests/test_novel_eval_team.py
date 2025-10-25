@@ -1,7 +1,10 @@
 from autogen_agentchat.teams import RoundRobinGroupChat
 from autogen_ext.models.openai import OpenAIChatCompletionClient
 
-from writer_studio.teams.novel_eval_team import _build_model_client, create_novel_eval_team
+from writer_studio.teams.novel_eval_team import (
+    _build_model_client,
+    create_novel_eval_team,
+)
 
 
 def test_build_model_client_openai(monkeypatch):
@@ -24,19 +27,24 @@ def test_build_model_client_gemini(monkeypatch):
 
 def test_create_team_fallback_language(monkeypatch):
     # Use a language code that does not exist to trigger fallback to en.yaml
-    team = create_novel_eval_team(model="gpt-4o-mini", provider="openai", answer_language="xx-YY")
+    team = create_novel_eval_team(
+        model="gpt-4o-mini", provider="openai", answer_language="xx-YY"
+    )
     assert isinstance(team, RoundRobinGroupChat)
 
 
 def test_agents_use_fallback_provider_openai(monkeypatch):
     # Ensure env defaults are openai
     monkeypatch.setenv("NOVEL_EVAL_PROVIDER", "openai")
-    team = create_novel_eval_team(model="gpt-4o-mini", provider="openai", answer_language="en")
+    team = create_novel_eval_team(
+        model="gpt-4o-mini", provider="openai", answer_language="en"
+    )
     assert isinstance(team, RoundRobinGroupChat)
 
 
 def test_per_agent_yaml_override(monkeypatch, tmp_path):
-    # Create a temporary tasks directory with per-agent provider/model overrides
+    # Create a temporary tasks directory with per-agent provider/model
+    # overrides
     tasks_dir = tmp_path
     yaml_text = (
         "language: test\n\n"
@@ -71,5 +79,7 @@ def test_per_agent_yaml_override(monkeypatch, tmp_path):
     # Point loader to our temporary tasks directory
     monkeypatch.setenv("NOVEL_EVAL_TASKS_DIR", str(tasks_dir))
 
-    team = create_novel_eval_team(model="gpt-4o-mini", provider="openai", answer_language="test")
+    team = create_novel_eval_team(
+        model="gpt-4o-mini", provider="openai", answer_language="test"
+    )
     assert isinstance(team, RoundRobinGroupChat)

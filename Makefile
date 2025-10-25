@@ -16,19 +16,22 @@ build:
 # Run unit tests with coverage (console + HTML)
 # Override testpaths to avoid errors when tests/ is missing
 # HTML report output: reports/htmlcov
- test:
+test:
 	$(UV) run pytest --override-ini testpaths= --cov=$(PY_SRC) --cov-report=term-missing --cov-report=html:reports/htmlcov --cov-fail-under=95
 
 # Lint: black check, isort check, flake8 (with explicit line length and ignores)
 lint:
 	$(UV) run black --check --diff $(LINT_PATHS) || true
 	$(UV) run isort --check --diff $(LINT_PATHS) || true
-	$(UV) run flake8 --max-line-length 140 --extend-ignore E203,W503 $(LINT_PATHS)
+	# Enforce Flake8 line-length 88 (also set in pyproject.toml)
+	$(UV) run flake8 --max-line-length 88 $(LINT_PATHS)
 
-# Format: black and isort
+# Format: isort, black, and trim trailing whitespace
 format:
 	$(UV) run isort $(LINT_PATHS)
 	$(UV) run black $(LINT_PATHS)
+	# Strip trailing whitespace to fix flake8 W291
+	find $(PY_SRC) $(TESTS) -type f -name "*.py" -exec sed -i '' -E 's/[[:space:]]+$$//' {} +
 
 # Run API locally with reload
 serve-api:

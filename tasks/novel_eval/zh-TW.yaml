@@ -1,4 +1,5 @@
 language: zh-TW
+max_rounds: 4
 
 task:
   preamble: |

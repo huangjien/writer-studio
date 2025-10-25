@@ -29,13 +29,18 @@ def _safe_token_count(text: str, model_name: str) -> int:
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="novel-eval",
-        description="Evaluate a novel chapter using an Autogen RoundRobinGroupChat team.",
+        description=(
+            "Evaluate a novel chapter using an Autogen " "RoundRobinGroupChat team."
+        ),
     )
     parser.add_argument("chapter", help="Path to a text file containing the chapter.")
     parser.add_argument(
         "--model",
         default=os.getenv("NOVEL_EVAL_MODEL", "gpt-4o-mini"),
-        help="Model name, e.g. gpt-4o-mini, deepseek-r1, gemini-1.5-flash, or an Ollama model.",
+        help=(
+            "Model name, e.g. gpt-4o-mini, deepseek-r1, "
+            "gemini-1.5-flash, or an Ollama model."
+        ),
     )
     parser.add_argument(
         "--provider",
@@ -43,11 +48,11 @@ def main() -> None:
         choices=["openai", "deepseek", "gemini", "ollama"],
         help="LLM provider to use (default from NOVEL_EVAL_PROVIDER).",
     )
+
     parser.add_argument(
-        "--rounds", type=int, default=4, help="Max round-robin turns (agents speak once per round)."
-    )
-    parser.add_argument(
-        "--json", action="store_true", help="Print only the final JSON summary if available."
+        "--json",
+        action="store_true",
+        help="Print only the final JSON summary if available.",
     )
     parser.add_argument(
         "--lang",
@@ -71,10 +76,9 @@ def main() -> None:
         raise SystemExit(f"File not found: {chapter_path}")
 
     log.info(
-        "Starting evaluation: provider=%s model=%s rounds=%d lang=%s file=%s",
+        "Starting evaluation: provider=%s model=%s lang=%s file=%s",
         args.provider,
         args.model,
-        args.rounds,
         args.lang,
         chapter_path,
     )
@@ -85,7 +89,6 @@ def main() -> None:
     result = evaluate_chapter(
         text,
         model=args.model,
-        max_rounds=args.rounds,
         answer_language=args.lang,
         provider=args.provider,
     )
@@ -98,16 +101,23 @@ def main() -> None:
     if not args.json:
         print("=== Team Messages ===")
         for msg in result.messages:
-            # Each message is a BaseChatMessage; print role and content if present
-            name = getattr(msg, "source", None) or getattr(msg, "name", None) or "message"
-            content = getattr(msg, "content", None) or getattr(msg, "text", None) or str(msg)
+            # Each message is a BaseChatMessage; print role and content
+            # if present
+            name = (
+                getattr(msg, "source", None) or getattr(msg, "name", None) or "message"
+            )
+            content = (
+                getattr(msg, "content", None) or getattr(msg, "text", None) or str(msg)
+            )
             print(f"\n[{name}]\n{content}")
 
     # Attempt to locate the summarizer's JSON output in the last message
     final_text = None
     if result.messages:
         last_msg = result.messages[-1]
-        final_text = getattr(last_msg, "content", None) or getattr(last_msg, "text", None)
+        final_text = getattr(last_msg, "content", None) or getattr(
+            last_msg, "text", None
+        )
 
     if args.json and final_text:
         try:
@@ -139,7 +149,12 @@ def main() -> None:
         f"output_tokens: {output_tokens}",
         f"total_tokens: {total_tokens}",
     ]
-    log.debug("Token usage: input=%d output=%d total=%d", input_tokens, output_tokens, total_tokens)
+    log.debug(
+        "Token usage: input=%d output=%d total=%d",
+        input_tokens,
+        output_tokens,
+        total_tokens,
+    )
     if args.json:
         sys.stderr.write("\n" + "\n".join(lines) + "\n")
     else:

@@ -1,4 +1,5 @@
 language: en
+max_rounds: 4
 
 # Task preamble describes the evaluation goal and output contract.
 task:

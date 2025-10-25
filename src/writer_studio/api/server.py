@@ -1,15 +1,18 @@
+import json
 from typing import Any, Dict, List, Optional
 
-import asyncio
-import json
 from fastapi import FastAPI, HTTPException, Query
-from pydantic import BaseModel, Field
 from fastapi.concurrency import run_in_threadpool
+from pydantic import BaseModel, Field
 
-from writer_studio.logging import init_logging, get_logger
+from writer_studio.logging import get_logger, init_logging
+from writer_studio.persistence.db import (
+    get_evaluation,
+    init_db,
+    save_evaluation,
+    search_evaluations,
+)
 from writer_studio.teams.novel_eval_team import a_evaluate_chapter
-from writer_studio.persistence.db import init_db, save_evaluation, get_evaluation, search_evaluations
-
 
 init_logging(None)
 log = get_logger("novel_eval.api")
@@ -23,11 +26,13 @@ class EvaluateRequest(BaseModel):
     answer_language: Optional[str] = Field(
         None, description="Answer language code like zh-CN; defaults via env"
     )
-    max_rounds: int = Field(4, ge=1, le=100, description="Round-robin turns across agents")
     return_messages: bool = Field(
-        False, description="Include all agent messages in response for transparency"
+        False,
+        description="Include all agent messages in response for transparency",
     )
-    persist: bool = Field(True, description="Persist evaluation to SQLite with vector index")
+    persist: bool = Field(
+        True, description="Persist evaluation to SQLite with vector index"
+    )
 
 
 class AgentMessage(BaseModel):
@@ -62,7 +67,9 @@ async def get_eval(eval_id: int) -> Dict[str, Any]:
 
 
 @app.get("/search")
-async def search(q: str = Query(..., min_length=1), top_k: int = Query(5, ge=1, le=50)) -> Dict[str, Any]:
+async def search(
+    q: str = Query(..., min_length=1), top_k: int = Query(5, ge=1, le=50)
+) -> Dict[str, Any]:
     results = await run_in_threadpool(search_evaluations, q, top_k)
     return {"results": results}
 
@@ -71,17 +78,17 @@ async def search(q: str = Query(..., min_length=1), top_k: int = Query(5, ge=1, 
 async def evaluate(payload: EvaluateRequest) -> EvaluateResponse:
     try:
         log.info(
-            "API evaluate: provider=%s model=%s rounds=%d lang=%s",
+            "API evaluate: provider=%s model=%s lang=%s",
             payload.provider,
             payload.model,
-            payload.max_rounds,
             payload.answer_language,
         )
         result = await a_evaluate_chapter(
             chapter_text=payload.chapter_text,
             model=payload.model,
-            max_rounds=payload.max_rounds,
-            answer_language=payload.answer_language if payload.answer_language else None,
+            answer_language=(
+                payload.answer_language if payload.answer_language else None
+            ),
             provider=payload.provider,
         )
     except Exception as e:
@@ -92,7 +99,9 @@ async def evaluate(payload: EvaluateRequest) -> EvaluateResponse:
     final_text: Optional[str] = None
     if getattr(result, "messages", None):
         last_msg = result.messages[-1]
-        final_text = getattr(last_msg, "content", None) or getattr(last_msg, "text", None)
+        final_text = getattr(last_msg, "content", None) or getattr(
+            last_msg, "text", None
+        )
 
     # Attempt to parse final JSON (Summarizer output)
     final_json: Optional[Dict[str, Any]] = None
@@ -106,8 +115,12 @@ async def evaluate(payload: EvaluateRequest) -> EvaluateResponse:
     if payload.return_messages and getattr(result, "messages", None):
         messages = []
         for msg in result.messages:
-            name = getattr(msg, "source", None) or getattr(msg, "name", None) or "message"
-            content = getattr(msg, "content", None) or getattr(msg, "text", None) or str(msg)
+            name = (
+                getattr(msg, "source", None) or getattr(msg, "name", None) or "message"
+            )
+            content = (
+                getattr(msg, "content", None) or getattr(msg, "text", None) or str(msg)
+            )
             messages.append(AgentMessage(name=name, content=content))
 
     # Persist
@@ -117,6 +130,7 @@ async def evaluate(payload: EvaluateRequest) -> EvaluateResponse:
         def _safe_token_count(text: str, model_name: str) -> int:
             try:
                 import tiktoken  # type: ignore
+
                 try:
                     enc = tiktoken.encoding_for_model(model_name)
                 except Exception:
@@ -128,7 +142,9 @@ async def evaluate(payload: EvaluateRequest) -> EvaluateResponse:
             except Exception:
                 return len((text or "").split())
 
-        input_tokens = _safe_token_count(payload.chapter_text, payload.model or "unknown")
+        input_tokens = _safe_token_count(
+            payload.chapter_text, payload.model or "unknown"
+        )
         output_tokens = 0
         for msg in getattr(result, "messages", []) or []:
             content = getattr(msg, "content", None) or getattr(msg, "text", None)
@@ -136,12 +152,15 @@ async def evaluate(payload: EvaluateRequest) -> EvaluateResponse:
                 output_tokens += _safe_token_count(content, payload.model or "unknown")
         total_tokens = input_tokens + output_tokens
 
+        # Calculate actual rounds used (4 agents per round)
+        actual_rounds = len(result.messages) // 4 if result.messages else 0
+
         eval_id = await run_in_threadpool(
             save_evaluation,
             payload.provider,
             payload.model,
             payload.answer_language,
-            payload.max_rounds,
+            actual_rounds,
             input_tokens,
             output_tokens,
             total_tokens,
@@ -150,7 +169,12 @@ async def evaluate(payload: EvaluateRequest) -> EvaluateResponse:
             final_json,
         )
 
-    return EvaluateResponse(id=eval_id, final_text=final_text, final_json=final_json, messages=messages)
+    return EvaluateResponse(
+        id=eval_id,
+        final_text=final_text,
+        final_json=final_json,
+        messages=messages,
+    )
 
 
 if __name__ == "__main__":

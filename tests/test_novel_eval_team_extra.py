@@ -31,7 +31,9 @@ def test_build_model_client_ollama_import_failure(monkeypatch):
     real_import = builtins.__import__
 
     def fake_import(name, *args, **kwargs):
-        if name == "autogen_ext.models.ollama" or name.startswith("autogen_ext.models.ollama"):
+        if name == "autogen_ext.models.ollama" or name.startswith(
+            "autogen_ext.models.ollama"
+        ):
             raise ImportError("forced failure for test")
         return real_import(name, *args, **kwargs)
 
@@ -86,7 +88,6 @@ async def test_a_evaluate_chapter_runs_with_stub(monkeypatch, tmp_path):
     res = await a_evaluate_chapter(
         chapter_text="Some text",
         model="gpt-4o-mini",
-        max_rounds=2,
         answer_language="test2",
         provider="openai",
     )
@@ -119,7 +120,6 @@ def test_evaluate_chapter_sync_wrapper(monkeypatch, tmp_path):
     res = evaluate_chapter(
         chapter_text="Sync text",
         model="gpt-4o-mini",
-        max_rounds=1,
         answer_language="en",
         provider="openai",
     )

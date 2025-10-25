@@ -23,13 +23,20 @@ def _build_model_client(model: Optional[str] = None, provider: Optional[str] = N
 
     Supported providers: openai, deepseek, gemini, ollama.
     - openai: requires `OPENAI_API_KEY` in env (or keyless if default SDK finds it)
-    - deepseek: requires `DEEPSEEK_API_KEY`; uses OpenAI-compatible endpoint
-    - gemini: requires `GEMINI_API_KEY`; uses OpenAI-compatible endpoint
-    - ollama: requires local Ollama; optional `OLLAMA_HOST` (default http://localhost:11434)
+    - deepseek: requires `DEEPSEEK_API_KEY`; uses OpenAI-compatible
+      endpoint
+    - gemini: requires `GEMINI_API_KEY`; uses OpenAI-compatible
+      endpoint
+    - ollama: requires local Ollama; optional `OLLAMA_HOST`
+      (default http://localhost:11434)
     """
     chosen_model = model or DEFAULT_MODEL
     chosen_provider = (provider or DEFAULT_PROVIDER).lower()
-    log.debug("Building model client: provider=%s model=%s", chosen_provider, chosen_model)
+    log.debug(
+        "Building model client: provider=%s model=%s",
+        chosen_provider,
+        chosen_model,
+    )
 
     if chosen_provider == "openai":
         return OpenAIChatCompletionClient(model=chosen_model)
@@ -78,10 +85,13 @@ def _build_model_client(model: Optional[str] = None, provider: Optional[str] = N
 
     if chosen_provider == "ollama":
         try:
-            from autogen_ext.models.ollama import OllamaChatCompletionClient  # type: ignore
+            from autogen_ext.models.ollama import (
+                OllamaChatCompletionClient,  # type: ignore
+            )
         except Exception as e:
             raise RuntimeError(
-                "Ollama client not available. Install autogen-ext[ollama] and ensure Ollama is running."
+                "Ollama client not available. Install autogen-ext[ollama] "
+                "and ensure Ollama is running."
             ) from e
         host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
         # autogen Ollama client takes `host` without /v1 suffix
@@ -101,7 +111,9 @@ def _load_task_config(answer_language: str) -> dict:
     candidate = base_dir / f"{lang_code}.yaml"
     if not candidate.exists():
         log.warning(
-            "Task config for lang=%s not found at %s; falling back to en.yaml", lang_code, candidate
+            "Task config for lang=%s not found at %s; falling back to en.yaml",
+            lang_code,
+            candidate,
         )
         candidate = base_dir / "en.yaml"
     try:
@@ -118,7 +130,6 @@ def _load_task_config(answer_language: str) -> dict:
 
 def create_novel_eval_team(
     model: Optional[str] = None,
-    max_rounds: int = 4,
     answer_language: str = DEFAULT_ANSWER_LANGUAGE,
     provider: Optional[str] = None,
 ) -> RoundRobinGroupChat:
@@ -134,6 +145,10 @@ def create_novel_eval_team(
     """
     fallback_model = model or DEFAULT_MODEL
     fallback_provider = (provider or DEFAULT_PROVIDER).lower()
+
+    cfg = _load_task_config(answer_language)
+    max_rounds = cfg.get("max_rounds", 4)  # Read from config, default to 4
+
     log.info(
         "Creating team: default_model=%s provider=%s max_rounds=%d lang=%s",
         fallback_model,
@@ -141,8 +156,6 @@ def create_novel_eval_team(
         max_rounds,
         answer_language,
     )
-
-    cfg = _load_task_config(answer_language)
     agents_cfg = cfg.get("agents", {})
 
     critic_cfg = agents_cfg.get("LiteraryCritic", {})
@@ -248,7 +261,8 @@ def create_novel_eval_team(
     )
 
     log.debug(
-        "Agent models/providers: critic=%s/%s copy_editor=%s/%s continuity=%s/%s summarizer=%s/%s",
+        "Agent models/providers: critic=%s/%s copy_editor=%s/%s "
+        "continuity=%s/%s summarizer=%s/%s",
         critic_model,
         critic_provider,
         copy_model,
@@ -261,7 +275,8 @@ def create_novel_eval_team(
 
     termination = MaxMessageTermination(max_rounds)
     team = RoundRobinGroupChat(
-        [critic, copy_editor, continuity, summarizer], termination_condition=termination
+        [critic, copy_editor, continuity, summarizer],
+        termination_condition=termination,
     )
     return team
 
@@ -269,21 +284,26 @@ def create_novel_eval_team(
 async def a_evaluate_chapter(
     chapter_text: str,
     model: Optional[str] = None,
-    max_rounds: int = 4,
     answer_language: str = DEFAULT_ANSWER_LANGUAGE,
     provider: Optional[str] = None,
 ) -> TaskResult:
-    """Async: Run the evaluation team on the provided chapter text and return the TaskResult."""
+    """
+    Async: Run the evaluation team on the provided chapter text
+    and return the TaskResult.
+    """
     team = create_novel_eval_team(
-        model=model, max_rounds=max_rounds, answer_language=answer_language, provider=provider
+        model=model, answer_language=answer_language, provider=provider
     )
 
     cfg = _load_task_config(answer_language)
+    max_rounds = cfg.get("max_rounds", 4)  # Read from config, default to 4
     preamble = cfg.get("task", {}).get(
         "preamble",
         (
-            f"All agents must answer in {answer_language}. Keep outputs concise and follow your role rules.\n\n"
-            "Evaluate the following novel chapter. Each agent speaks once, stays concise, and follows their output rules.\n\n"
+            f"All agents must answer in {answer_language}. Keep outputs "
+            f"concise and follow your role rules.\n\n"
+            "Evaluate the following novel chapter. Each agent speaks once, "
+            "stays concise, and follows their output rules.\n\n"
         ),
     )
     schema = cfg.get("task", {}).get("schema")
@@ -306,7 +326,6 @@ async def a_evaluate_chapter(
 def evaluate_chapter(
     chapter_text: str,
     model: Optional[str] = None,
-    max_rounds: int = 4,
     answer_language: str = DEFAULT_ANSWER_LANGUAGE,
     provider: Optional[str] = None,
 ) -> TaskResult:
@@ -315,7 +334,6 @@ def evaluate_chapter(
         a_evaluate_chapter(
             chapter_text,
             model=model,
-            max_rounds=max_rounds,
             answer_language=answer_language,
             provider=provider,
         )

@@ -19,7 +19,14 @@ class FakeResult:
 
 def test_cli_missing_file_exits(monkeypatch, capsys, tmp_path):
     missing = tmp_path / "missing.txt"
-    argv = ["novel-eval", str(missing), "--provider", "openai", "--model", "gpt-4o-mini"]
+    argv = [
+        "novel-eval",
+        str(missing),
+        "--provider",
+        "openai",
+        "--model",
+        "gpt-4o-mini",
+    ]
     monkeypatch.setattr(sys, "argv", argv)
     with pytest.raises(SystemExit) as exc:
         cli.main()
@@ -98,7 +105,15 @@ def test_cli_json_invalid_final_text(monkeypatch, capsys, tmp_path):
     fake_res = FakeResult(messages)
     monkeypatch.setattr(cli, "evaluate_chapter", lambda *a, **k: fake_res)
 
-    argv = ["novel-eval", str(chapter), "--provider", "openai", "--model", "gpt-4o-mini", "--json"]
+    argv = [
+        "novel-eval",
+        str(chapter),
+        "--provider",
+        "openai",
+        "--model",
+        "gpt-4o-mini",
+        "--json",
+    ]
     monkeypatch.setattr(sys, "argv", argv)
 
     cli.main()
@@ -115,7 +130,15 @@ def test_cli_json_no_final_text(monkeypatch, capsys, tmp_path):
     fake_res = FakeResult(messages)
     monkeypatch.setattr(cli, "evaluate_chapter", lambda *a, **k: fake_res)
 
-    argv = ["novel-eval", str(chapter), "--provider", "openai", "--model", "gpt-4o-mini", "--json"]
+    argv = [
+        "novel-eval",
+        str(chapter),
+        "--provider",
+        "openai",
+        "--model",
+        "gpt-4o-mini",
+        "--json",
+    ]
     monkeypatch.setattr(sys, "argv", argv)
 
     cli.main()

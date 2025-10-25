@@ -20,15 +20,16 @@ pip install -e .[autogen-stable]
 ### CLI Usage
 
 ```
-novel-eval path/to/chapter.txt --model gpt-4o --rounds 4 --lang zh-CN
+novel-eval path/to/chapter.txt --model gpt-4o --lang zh-CN
 ```
 
 Flags:
 - `--model`: OpenAI model (default: `gpt-4o-mini`).
 - `--provider`: LLM provider (openai, deepseek, gemini, ollama). Defaults from `NOVEL_EVAL_PROVIDER`.
-- `--rounds`: Max round-robin turns (default: 4). With four agents, each speaks once.
 - `--json`: Print only the final JSON summary if available.
 - `--lang`: Answer language (default: `zh-CN`). All agents respond in this language.
+
+The maximum number of rounds is now configured in the language-specific YAML files (default: 4).
 
 Example:
 
@@ -42,7 +43,7 @@ novel-eval samples/chapter1.txt --json --lang zh-CN
 from writer_studio.teams.novel_eval_team import a_evaluate_chapter
 
 chapter_text = "..."
-result = await a_evaluate_chapter(chapter_text, model="gpt-4o", max_rounds=4, answer_language="zh-CN")
+result = await a_evaluate_chapter(chapter_text, model="gpt-4o", answer_language="zh-CN")
 print(result.messages[-1].content)  # JSON summary from Summarizer
 ```
 
@@ -61,6 +62,7 @@ print(result.messages[-1].content)  # JSON summary from Summarizer
   
   ```yaml
   language: en
+  max_rounds: 4
   task:
     preamble: |
       Evaluate a novel chapter. Respond strictly in en. Summarizer outputs JSON only per the schema.
@@ -103,7 +105,6 @@ A lightweight FastAPI service exposes the chapter evaluator via REST.
       "model": "qwen:8b",
       "provider": "ollama",
       "answer_language": "zh-CN",
-      "max_rounds": 4,
       "return_messages": true
     }
     ```
@@ -125,14 +126,15 @@ A lightweight FastAPI service exposes the chapter evaluator via REST.
 - Services:
   - `api`: FastAPI at `http://localhost:8000`
   - `nginx`: Front at `http://localhost:8080` (proxies to API)
-  - `ollama`: Optional local LLM runtime (`http://localhost:11434`)
+- External resource:
+  - `ollama`: External LLM runtime reachable at `OLLAMA_HOST` (default `http://localhost:11434`). Not included in Compose.
 - Environment overrides:
   - `NOVEL_EVAL_PROVIDER`, `NOVEL_EVAL_MODEL`, `NOVEL_EVAL_LANG`, `NOVEL_EVAL_LOG_LEVEL`, `OLLAMA_HOST`, `NOVEL_EVAL_DB_PATH`
 - Data persistence:
   - Compose mounts `./data` to `/data` in the API container; SQLite DB at `/data/evals.db`.
 - Nginx config: `nginx.conf`
 
-This API uses the existing team orchestration in `writer_studio.teams.novel_eval_team` and returns the Summarizer's JSON when available. To ensure the Summarizer is the final speaker, set `max_rounds` divisible by 4.
+This API uses the existing team orchestration in `writer_studio.teams.novel_eval_team` and returns the Summarizer's JSON when available. To ensure the Summarizer is the final speaker, configure `max_rounds` in the language YAML files to be divisible by 4.
 
 ## Production (GCP) Deployment
 
@@ -178,10 +180,10 @@ Note: Embeddings are deterministic, local pseudo-vectors (no network calls). If 
 - Control verbosity with `--log-level` (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`). Default is `INFO`.
 - Or set environment variable `NOVEL_EVAL_LOG_LEVEL` to override globally.
 - Example:
-  - `novel-eval samples/chapter1.txt --model gpt-4o-mini --rounds 3 --lang en --log-level DEBUG`
+  - `novel-eval samples/chapter1.txt --model gpt-4o-mini --lang en --log-level DEBUG`
   - `export NOVEL_EVAL_LOG_LEVEL=WARNING && novel-eval samples/ch1.txt --lang fr`
 - Logs include:
-  - Startup configuration (model, rounds, language, file)
+  - Startup configuration (model, language, file)
   - Task config loading and fallbacks
   - Team run lifecycle and message counts
   - JSON parsing warnings (if final message isn’t valid JSON)

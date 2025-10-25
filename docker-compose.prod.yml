@@ -10,13 +10,11 @@ services:
       NOVEL_EVAL_LANG: ${NOVEL_EVAL_LANG:-zh-CN}
       NOVEL_EVAL_LOG_LEVEL: ${NOVEL_EVAL_LOG_LEVEL:-INFO}
       NOVEL_EVAL_DB_PATH: /data/evals.db
-      OLLAMA_HOST: ${OLLAMA_HOST:-http://ollama:11434}
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://localhost:11434}
     volumes:
       - ./data:/data
     networks:
       - appnet
-    depends_on:
-      - ollama
     # No external port mapping; API is only reachable via nginx
 
   nginx:
@@ -29,13 +27,6 @@ services:
       - ./certs:/etc/nginx/certs:ro
     depends_on:
       - api
-    networks:
-      - appnet
-
-  ollama:
-    image: ollama/ollama:latest
-    container_name: ollama
-    # No external port mapping in production
     networks:
       - appnet
 
