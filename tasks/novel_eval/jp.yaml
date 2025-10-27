@@ -14,7 +14,12 @@ task:
       "continuity_issues": [string],    # 整合性の問題
       "editing_suggestions": [string],  # 編集・文体・明確さの提案
       "key_themes": [string],           # 主要テーマ
-      "action_items": [string]          # 具体的な改善アクション
+      "action_items": [string],         # 具体的な改善アクション
+      "provider": string,
+      "model": string,
+      "input_tokens": number,
+      "output_tokens": number,
+      "total_tokens": number
     }
 
 agents:

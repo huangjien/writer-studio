@@ -15,7 +15,12 @@ task:
       "continuity_issues": [string],    # plot/character consistency problems
       "editing_suggestions": [string],  # grammar, style, clarity fixes
       "key_themes": [string],           # distilled themes
-      "action_items": [string]          # concrete next steps for revision
+      "action_items": [string],         # concrete next steps for revision
+      "provider": string,
+      "model": string,
+      "input_tokens": number,
+      "output_tokens": number,
+      "total_tokens": number
     }
 
 agents:

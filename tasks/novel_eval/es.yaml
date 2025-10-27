@@ -14,7 +14,12 @@ task:
       "continuity_issues": [string],    # problemas de continuidad
       "editing_suggestions": [string],  # sugerencias de edición
       "key_themes": [string],           # temas clave
-      "action_items": [string]          # próximos pasos concretos
+      "action_items": [string],         # próximos pasos concretos
+      "provider": string,
+      "model": string,
+      "input_tokens": number,
+      "output_tokens": number,
+      "total_tokens": number
     }
 
 agents:
