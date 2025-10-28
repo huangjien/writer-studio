@@ -1,0 +1,110 @@
+language: en
+max_rounds: 4
+
+task:
+  preamble: |
+    You are a team reviewing and discussing a character in a novel chapter.
+    Collaboratively analyze identity, conflicts, backstory, drives, worldview,
+    personality, relationships, symbolism, literary notes, and meta analysis.
+    The summarizer must output only valid JSON according to the template keys.
+
+  template:
+    character_profile:
+      name: ""
+      archetype: ""
+      role_in_story: ""
+
+      core_identity:
+        motivation: ""          # Primary driver of actions
+        goal: ""                # External measurable goal
+        wants: ""               # Overt desire
+        fears: ""               # Key fears (loss, failure, rejection)
+        epiphany: ""            # Final awakening or worldview shift
+
+      conflict:
+        internal_conflict: ""   # Rational vs emotional; beliefs vs reality
+        external_conflict: ""   # Enemy, society, environment
+        moral_conflict: ""      # Loyalty vs self-interest; ideals vs survival
+
+      backstory:
+        origin: ""              # Origin/background/upbringing
+        trauma: ""              # Key psychological wound
+        early_influence: ""     # Formative influences (family, society, mentor)
+        turning_points:
+          - ""
+          - ""
+          - ""
+
+      inner_drive:
+        surface_drive: ""       # Surface motive (visible behavior)
+        hidden_drive: ""        # Deep motive (subconscious need)
+        psychological_wound: "" # Deep psychological scar
+        growth_arc: ""          # Growth/decline arc (from → to)
+
+      worldview:
+        belief_system: ""       # Value system
+        moral_code: ""          # Moral code or boundary
+        philosophical_conflict: "" # Internal philosophical tension
+
+      personality:
+        temperament: ""         # Temperament (impulsive, cautious, etc.)
+        emotional_pattern: ""   # Emotional reaction pattern
+        tone_and_voice: ""      # Language and tone traits
+        behavioral_traits:
+          - ""
+          - ""
+          - ""
+          - ""
+
+      relationships:
+        allies: []               # Allies/supporters
+        rivals: []               # Rivals/enemies
+        betrayal_chain: []       # Key betrayals (if any)
+        relationship_pattern: "" # Pattern (utilitarian, interdependent, controlling)
+
+      symbolic_function:
+        narrative_role: ""      # Narrative function in story
+        symbolism: ""           # Symbolic meaning or metaphor
+        story_function: ""      # Contribution to theme/plot
+
+      literary_notes:
+        theme_alignment: []      # Themes associated (power, redemption, solitude)
+        moral_message: ""       # Moral/philosophical message from the arc
+        tonal_keywords: []       # Style keywords (tragic, cold, satirical)
+
+      meta_analysis:
+        archetype_in_modern_terms: ""   # Modern archetype (anti-hero, etc.)
+        comparable_characters:
+          - ""
+          - ""
+          - ""
+        creative_adaptations:
+          - ""
+          - ""
+          - ""
+
+agents:
+  LiteraryPsychologist:
+    provider: openai
+    model: gpt-4o-mini
+    system_message: |
+      You are a literary psychologist. Analyze the character's core identity, inner drive,
+      worldview, and psychological wounds, citing specifics from the chapter and profile.
+  NarrativeRoleAnalyst:
+    provider: openai
+    model: gpt-4o-mini
+    system_message: |
+      You are a narrative role analyst. Discuss the character's symbolic function, role in story,
+      and thematic alignment. Identify how motifs connect to the plot.
+  ContinuityReviewer:
+    provider: openai
+    model: gpt-4o-mini
+    system_message: |
+      You are a continuity reviewer. Check relationship patterns, turning points, and consistency
+      across backstory and conflicts, noting contradictions to resolve.
+  Summarizer:
+    provider: openai
+    model: gpt-4o-mini
+    system_message: |
+      Produce a single JSON object strictly matching the character_profile template keys.
+      Do not add extra keys. Reflect consensus and include concise, specific details.

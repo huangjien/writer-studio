@@ -1,0 +1,109 @@
+language: zh-CN
+max_rounds: 4
+
+task:
+  preamble: |
+    你是一支面向小说角色的评审与讨论团队。请围绕角色的身份、冲突、背景、驱动力、
+    世界观、性格、关系、象征功能、文学备注与元分析展开系统讨论。最终由总结者仅输出
+    一个符合模板键的 JSON 对象。
+
+  template:
+    character_profile:
+      name: ""
+      archetype: ""
+      role_in_story: ""
+
+      core_identity:
+        motivation: ""          # 驱动角色行动的主要动机
+        goal: ""                # 外在目标（具体可衡量）
+        wants: ""               # 角色显性欲望
+        fears: ""               # 角色恐惧的（失去、失败、被拒绝等）
+        epiphany: ""            # 最终觉醒或顿悟（世界观或信念的转变）
+
+      conflict:
+        internal_conflict: ""   # 内心冲突（理性与情感、信念与现实）
+        external_conflict: ""   # 外部冲突（敌人、社会、环境）
+        moral_conflict: ""      # 道德冲突（忠诚 vs 私欲，理想 vs 生存）
+
+      backstory:
+        origin: ""              # 出身、背景或成长经历
+        trauma: ""              # 关键心理创伤
+        early_influence: ""     # 早期形成性影响（家庭、社会、导师）
+        turning_points:
+          - ""
+          - ""
+          - ""
+
+      inner_drive:
+        surface_drive: ""       # 表层动机（显性行为）
+        hidden_drive: ""        # 深层动机（潜意识心理需求）
+        psychological_wound: "" # 深层心理伤口
+        growth_arc: ""          # 成长/堕落弧线（从→到）
+
+      worldview:
+        belief_system: ""       # 价值体系
+        moral_code: ""          # 道德准则或底线
+        philosophical_conflict: "" # 哲学层面的内在矛盾
+
+      personality:
+        temperament: ""         # 性格气质（冲动、谨慎、外向、抑郁等）
+        emotional_pattern: ""   # 情绪反应模式
+        tone_and_voice: ""      # 语言与语气特征
+        behavioral_traits:
+          - ""
+          - ""
+          - ""
+          - ""
+
+      relationships:
+        allies: []               # 盟友或支持者
+        rivals: []               # 对手或敌人
+        betrayal_chain: []       # 关键背叛关系链（若有）
+        relationship_pattern: "" # 关系模式（功利型、互依型、控制型）
+
+      symbolic_function:
+        narrative_role: ""      # 在故事中的叙事功能
+        symbolism: ""           # 象征意义或隐喻
+        story_function: ""      # 对主题或情节的推动作用
+
+      literary_notes:
+        theme_alignment: []      # 角色对应的主题（例如：权力、救赎、孤独）
+        moral_message: ""       # 角色弧线传递的道德或哲理信息
+        tonal_keywords: []       # 文风关键词（例如：悲壮、冷冽、讽刺）
+
+      meta_analysis:
+        archetype_in_modern_terms: ""   # 对应的现代人物原型
+        comparable_characters:
+          - ""
+          - ""
+          - ""
+        creative_adaptations:
+          - ""
+          - ""
+          - ""
+
+agents:
+  LiteraryPsychologist:
+    provider: openai
+    model: gpt-4o-mini
+    system_message: |
+      你是一名文学心理学家。请分析角色的核心身份、内驱力、世界观与心理伤痕，
+      并结合章节文本与提供的角色档案给出具体证据。
+  NarrativeRoleAnalyst:
+    provider: openai
+    model: gpt-4o-mini
+    system_message: |
+      你是一名叙事角色分析师。讨论角色的象征功能、在故事中的叙事角色，以及与主题的契合度，
+      指出意象与情节推进的关联。
+  ContinuityReviewer:
+    provider: openai
+    model: gpt-4o-mini
+    system_message: |
+      你是一名连续性审阅者。检查关系模式、关键转折点与前后一致性，
+      标注需要协调的矛盾或冲突信息。
+  Summarizer:
+    provider: openai
+    model: gpt-4o-mini
+    system_message: |
+      请仅输出一个严格符合 character_profile 模板键的 JSON 对象，
+      不要新增键。体现团队共识，并给出简洁而具体的细节。

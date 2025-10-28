@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "writer-studio"
-version = "0.1.5"
+version = "0.1.6"
 description = "Writer Studio is a platform for writing and editing documents."
 readme = "README.md"
 requires-python = ">=3.13"
@@ -45,6 +45,7 @@ autogen-stable = [
 
 [project.scripts]
 novel-eval = "writer_studio.cli.evaluate_chapter:main"
+character-profile = "writer_studio.cli.character_profile:main"
 
 [tool.black]
 line-length = 88
@@ -79,6 +80,7 @@ markers = ["asyncio"]
 asyncio_mode = "auto"
 filterwarnings = [
   "ignore::DeprecationWarning:pytest_asyncio.plugin",
+  "ignore::DeprecationWarning:starlette._utils",
 ]
 
 [tool.coverage.run]

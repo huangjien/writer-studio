@@ -265,3 +265,70 @@ agents:
 - `OLLAMA_HOST` should be a base URL (no `/v1` suffix), e.g. `http://localhost:11434`.
 - Gemini’s OpenAI-compatible endpoint supports a subset of features; structured output and tool calling may be limited.
 - If an agent omits `provider`/`model` in YAML, it falls back to `NOVEL_EVAL_PROVIDER`/`NOVEL_EVAL_MODEL` or CLI arguments.
+
+## Character Profiles & Templates
+
+An interactive CLI to collect, save, search, and reuse character profiles. Profiles are structured per language-specific YAML templates in `tasks/character_profile/` (`en.yaml`, `zh-CN.yaml`). You can also create reusable templates based on historical or fictional persons and adapt them when creating new characters.
+
+### CLI Commands
+
+```
+# Collect a character profile interactively (defaults to zh-CN)
+character-profile collect --language zh-CN
+
+# Save outputs
+character-profile collect --language zh-CN \
+  --json-out profile.json --yaml-out profile.yaml --persist
+
+# Edit an existing profile by id (prefilled prompts)
+character-profile collect --update --id 12
+
+# Show/List
+character-profile show --language zh-CN --name "李青"
+character-profile list --language zh-CN
+
+# Search by free text or JSON field value
+character-profile search --language zh-CN --q 侦探
+character-profile search --field relationships.allies --value 张三 --limit 100
+
+# Collect a reusable template (history/fiction/person)
+character-profile tcollect --language en --source "Fiction: Sherlock Holmes"
+
+# List/Show templates
+character-profile tlist --language en
+character-profile tshow --id 5
+
+# Use a template to create a new character (edit only backstory & relationships)
+character-profile use_template --id 5 --name "Adrian Wu" --language en \
+  --json-out profile.json --yaml-out profile.yaml --persist
+```
+
+### What Gets Saved
+
+- `character_profiles` table: `id`, `created_at`, `updated_at`, `lang`, `name`, `profile_json`
+- `character_templates` table: `id`, `created_at`, `updated_at`, `lang`, `name`, `source`, `template_json`
+- DB path: `NOVEL_EVAL_DB_PATH` (default `/data/evals.db`).
+
+### Template Sources and Reuse
+
+- Templates can reference real historical figures or fictional characters via `--source` (e.g., `"History: 李白"`, `"Fiction: Holmes"`).
+- `use_template` loads by `--id`, keeps most sections from the template, and prompts only `backstory` and `relationships` (plus `name`).
+- The new character profile is saved to `character_profiles` and can be shown, listed, or searched.
+
+### Search Behavior
+
+- `--q` matches `%q%` in `name` or raw JSON text.
+- `--field` + `--value` uses SQLite JSON1: `json_extract(<json>, '$.<field>') LIKE '%<value>%'`.
+- `--language` filters results; combine with `--q` or `--field/--value`.
+
+### Configuration
+
+- `CHAR_LANG`: default language for the CLI (e.g., `zh-CN`, `en`).
+- `CHAR_TASKS_DIR`: override the path to `tasks/character_profile/` YAMLs.
+- When a language YAML is missing, the CLI falls back to `en.yaml`.
+
+### Notes
+
+- Prompts accept defaults when editing (`--update`); press Enter to keep current values.
+- Lists show current items; pressing Enter immediately keeps the list.
+- All outputs (`--json-out`, `--yaml-out`) are optional; saving to SQLite is controlled by `--persist` (default: true).
