@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "writer-studio"
-version = "0.1.6"
+version = "0.1.7"
 description = "Writer Studio is a platform for writing and editing documents."
 readme = "README.md"
 requires-python = ">=3.13"
